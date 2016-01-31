@@ -5,7 +5,7 @@
 # The jikes is *way* faster if you have it.
 #JAVAC=${JIKES}
 # Otherwise use Sun's compiler.
-JAVA_HOME=/usr/
+if test -z "$$JAVA_HOME"; then JAVA_HOME=/usr/
 JAVAC=${JAVA_HOME}/bin/javac -source 1.7
 JAVADOC=${JAVA_HOME}/bin/javadoc -use -source 1.7 -author -version -link http://java.sun.com/j2se/1.7.0/docs/api/ 
 MKDIR=mkdir
