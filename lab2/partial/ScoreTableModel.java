@@ -17,18 +17,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
 
-import javax.swing.table.TableModel;
-import javax.swing.event.TableModelListener;
 import javax.swing.event.TableModelEvent;
-import java.util.Iterator;
-import java.lang.Integer;
-import java.lang.Class;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
+import java.util.*;
   
 /**
  * An implementation of a {@link TableModel} that is designed to listen to

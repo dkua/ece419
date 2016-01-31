@@ -1,7 +1,7 @@
-import java.io.InvalidObjectException;
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
+import java.io.InvalidObjectException;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 
 public class ServerSenderThread implements Runnable {
 

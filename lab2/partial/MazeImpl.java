@@ -17,24 +17,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
 
-import java.lang.Thread;
-import java.lang.Runnable;
-import java.io.Serializable;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.Random;
-import java.util.Vector;  
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.HashMap;
+import java.io.*;
+import java.util.*;
 
 /**
  * A concrete implementation of a {@link Maze}.  

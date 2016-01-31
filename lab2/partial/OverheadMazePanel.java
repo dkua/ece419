@@ -16,27 +16,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
-  
-import javax.swing.JPanel;
-import javax.swing.JTextPane;
-import java.awt.Font;
-import java.awt.font.GlyphVector;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Dimension;
-import java.awt.Color;
-import java.awt.Polygon;
-import java.awt.RenderingHints;
+import java.awt.font.GlyphVector;
 import java.awt.geom.Arc2D;
-import java.awt.Shape;
-import java.awt.BasicStroke;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A {@link JPanel} that has been extended so that is will display an overhead view
