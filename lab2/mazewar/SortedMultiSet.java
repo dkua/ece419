@@ -17,6 +17,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
 
+import java.util.*;
+
 /**
  * An implementation of the {@link SortedSet} interface that allows 
  * multiple "equivalent" objects to be stored, unlike {@link TreeSet}.
