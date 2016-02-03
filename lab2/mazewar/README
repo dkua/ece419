@@ -1,8 +1,12 @@
+Team
+====
+David Kua - 998484536 - kuadavid
+** Permission was granted by Professor Amza to do this lab alone. **
+
+
 Introduction
 ============
-This implements a client-server Mazewar game. 
-Additionally, the MSocket class can be used to 
-induce errors, such as adding delays and reordering packets.
+This implements a client-server Mazewar game with four "human" players.
 
 
 Architecture
@@ -22,14 +26,9 @@ When an event happens, it is sent to the server. The server
 stamps the event with a global sequence number and broadcasts to all 
 hosts.
 
-The client and server communicates using MSockets, and MServerSockets
-which are analogous to Sockets and ServerSockets. MSockets are 
-constructed by passing a host address and port. MSockets expose two 
-main methods, readObject and writeObject to read and write objects, respectively. 
+Each client retrieves the server sent event and adds it to a PriorityBlockingQueue in the listening thread. Another thread called the Action thread peeks into the queue and checks the seq number against the last one it has acted upon. If it's the next event in line then the event will be popped out of the queue and acted upon. This allows the clients to order the events in a reasonable amount of time with the server acting as the global timekeeper.
 
-The MSocket can reorder packets and add delays based on 
-3 constants defined in MSocket.java, namely DELAY_WEIGHT, DELAY_THRESHOLD, 
-UNORDER_FACTOR. Errors are added both on sending and receiveing packets.
+The current solution does *not* order the events before sending them to the server. Events are ordered in whichever order they were received by the server. The final view is consistent between clients but the difference between the clients' keypresses and what they finally see are inconsistent.
 
 
 Making and Running
@@ -37,10 +36,12 @@ Making and Running
 To make the project run
 make
 
+Make sure to have a JAVA_HOME environment variable set, this should usually be /usr or whatever your </path/to/java/> is.
+
 To run the server:
-</path/to/java/>java Server <listening port>
+./server.sh <listening port>
 
 To run the clients: 
-</path/to/java/>java Mazewar <server host> <server port>
+./run.sh <server host> <server port>
 
 
