@@ -28,8 +28,6 @@ hosts.
 
 Each client retrieves the server sent event and adds it to a PriorityBlockingQueue in the listening thread. Another thread called the Action thread peeks into the queue and checks the seq number against the last one it has acted upon. If it's the next event in line then the event will be popped out of the queue and acted upon. This allows the clients to order the events in a reasonable amount of time with the server acting as the global timekeeper.
 
-The current solution does *not* order the events before sending them to the server. Events are ordered in whichever order they were received by the server. The final view is consistent between clients but the difference between the clients' keypresses and what they finally see are inconsistent.
-
 
 Making and Running
 ==================
