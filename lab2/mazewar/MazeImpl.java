@@ -75,7 +75,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
      *
      * @param point Treat the {@link Point} as a magintude specifying the
      *              size of the maze.
-     * @param seed  Initial seed for the random number generator.
+     * @param seed  Initial seed for thenrandom number generator.
      */
     public MazeImpl(Point point, long seed) {
         maxX = point.getX();
@@ -486,10 +486,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         assert (client != null);
         assert (checkBounds(point));
         CellImpl cell = getCellImpl(point);
-        Direction d = Direction.random();
-        while (cell.isWall(d)) {
-            d = Direction.random();
-        }
+        Direction d = Direction.north();
         cell.setContents(client);
         clientMap.put(client, new DirectedPoint(point, d));
         client.registerMaze(this);
@@ -522,8 +519,11 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
             point = new Point(randomGen.nextInt(maxX), randomGen.nextInt(maxY));
             cell = getCellImpl(point);
         }
+        Direction d = Direction.north();
+        cell.setContents(target);
+        clientMap.put(target, new DirectedPoint(point, d));
+        update();
         notifyClientKilled(source, target);
-        addClient(target, point);
     }
 
     /**

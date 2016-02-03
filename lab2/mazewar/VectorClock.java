@@ -13,7 +13,7 @@ public class VectorClock implements Comparable<VectorClock>, Serializable {
     private HashMap<String, Integer> clocks = new HashMap<String, Integer>();
 
     public VectorClock(Player[] players) {
-        for (Player player: players) {
+        for (Player player : players) {
             clocks.put(player.name, 0);
         }
     }

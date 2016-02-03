@@ -24,8 +24,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Hashtable;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * The entry point and glue code for the game.  It also contains some helpful
@@ -77,9 +77,9 @@ public class Mazewar extends JFrame {
      */
     private Hashtable<String, Client> clientTable = null;
     /**
-     * A map of {@link Client} clients to {@Link VectorClock} vector clocks.
+     * A priority queue of received MPackets.
      */
-    public static final ConcurrentHashMap<String, VectorClock> clockTable = new ConcurrentHashMap<String, VectorClock>();
+    private PriorityBlockingQueue<MPacket> pq = null;
     /**
      * A queue of events.
      */
@@ -132,6 +132,8 @@ public class Mazewar extends JFrame {
 
         //Initialize queue of events
         eventQueue = new LinkedBlockingQueue<MPacket>();
+        //Initialize priority queue of MPackets
+        pq = new PriorityBlockingQueue<MPacket>();
         //Initialize hash table of clients to client name
         clientTable = new Hashtable<String, Client>();
 
@@ -150,8 +152,6 @@ public class Mazewar extends JFrame {
                 maze.addClientAt(remoteClient, player.point, player.direction);
                 clientTable.put(player.name, remoteClient);
             }
-            VectorClock vc = new VectorClock(resp.players);
-            clockTable.put(player.name, vc);
         }
 
         // Use braces to force constructors not to be called at the beginning of the
@@ -267,9 +267,7 @@ public class Mazewar extends JFrame {
      *
      * @param args Command-line arguments.
      */
-    public static void main(String args[]) throws IOException,
-            ClassNotFoundException {
-
+    public static void main(String args[]) throws IOException, ClassNotFoundException {
         String host = args[0];
         int port = Integer.parseInt(args[1]);
              /* Create the GUI */
@@ -285,8 +283,10 @@ public class Mazewar extends JFrame {
     */
     private void startThreads() {
         //Start a new sender thread
-        new Thread(new ClientSenderThread(mSocket, eventQueue, clockTable)).start();
+        new Thread(new ClientSenderThread(mSocket, eventQueue)).start();
         //Start a new listener thread
-        new Thread(new ClientListenerThread(mSocket, clientTable, clockTable)).start();
+        new Thread(new ClientListenerThread(mSocket, pq)).start();
+        //Start a new action thread
+        new Thread(new ClientActionThread(mSocket, pq, clientTable)).start();
     }
 }

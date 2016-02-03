@@ -90,6 +90,22 @@ public class Direction {
         return null;
     }
 
+    public static Direction north() {
+        return North;
+    }
+
+    public static Direction south() {
+        return South;
+    }
+
+    public static Direction east() {
+        return East;
+    }
+
+    public static Direction west() {
+        return West;
+    }
+
     /**
      * Compare {@link Direction}s for equality.
      */

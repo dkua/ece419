@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-public class MPacket implements Serializable {
+public class MPacket implements Serializable, Comparable<MPacket> {
 
     /*The following are the type of events*/
     public static final int HELLO = 100;
@@ -19,22 +19,21 @@ public class MPacket implements Serializable {
     public static final int LEFT = 203;
     public static final int RIGHT = 204;
     public static final int FIRE = 205;
-    
+
     //These fields characterize the event  
     public int type;
     public int event;
-    public VectorClock clock;
 
     //The name determines the client that initiated the event
     public String name;
-    
+
     //The sequence number of the event
     public int sequenceNumber;
 
     //These are used to initialize the board
     public int mazeSeed;
     public int mazeHeight;
-    public int mazeWidth; 
+    public int mazeWidth;
     public Player[] players;
 
     public MPacket(int type, int event) {
@@ -48,18 +47,11 @@ public class MPacket implements Serializable {
         this.event = event;
     }
 
-    public MPacket(String name, int type, int event, VectorClock vc) {
-        this.name = name;
-        this.type = type;
-        this.event = event;
-        this.clock = vc;
-    }
-    
-    public String toString(){
+    public String toString() {
         String typeStr;
         String eventStr;
-        
-        switch(type){
+
+        switch (type) {
             case 100:
                 typeStr = "HELLO";
                 break;
@@ -68,9 +60,9 @@ public class MPacket implements Serializable {
                 break;
             default:
                 typeStr = "ERROR";
-                break;        
+                break;
         }
-        switch(event){
+        switch (event) {
             case 101:
                 eventStr = "HELLO_INIT";
                 break;
@@ -94,17 +86,27 @@ public class MPacket implements Serializable {
                 break;
             default:
                 eventStr = "ERROR";
-                break;        
+                break;
         }
-        //MPACKET(NAME: name, <typestr: eventStr>, SEQNUM: sequenceNumber, VC: this.clock)
-        String retString = String.format(
-                "MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s, VC: %s)",
+        //MPACKET(NAME: name, <typestr: eventStr>, SEQNUM: sequenceNumber)
+        return String.format(
+                "MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s)",
                 name,
                 typeStr,
                 eventStr,
-                sequenceNumber,
-                this.clock);
-        return retString;
+                sequenceNumber
+        );
     }
 
+    @Override
+    public int compareTo(MPacket o) {
+        int result = 0;
+        if (this.sequenceNumber < o.sequenceNumber) {
+            result = -1;
+        }
+        if (this.sequenceNumber > o.sequenceNumber) {
+            result = 1;
+        }
+        return result;
+    }
 }
