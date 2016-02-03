@@ -22,7 +22,8 @@ public class MPacket implements Serializable {
     
     //These fields characterize the event  
     public int type;
-    public int event; 
+    public int event;
+    public VectorClock clock;
 
     //The name determines the client that initiated the event
     public String name;
@@ -36,15 +37,22 @@ public class MPacket implements Serializable {
     public int mazeWidth; 
     public Player[] players;
 
-    public MPacket(int type, int event){
+    public MPacket(int type, int event) {
         this.type = type;
         this.event = event;
     }
-    
-    public MPacket(String name, int type, int event){
+
+    public MPacket(String name, int type, int event) {
         this.name = name;
         this.type = type;
         this.event = event;
+    }
+
+    public MPacket(String name, int type, int event, VectorClock vc) {
+        this.name = name;
+        this.type = type;
+        this.event = event;
+        this.clock = vc;
     }
     
     public String toString(){
@@ -88,9 +96,14 @@ public class MPacket implements Serializable {
                 eventStr = "ERROR";
                 break;        
         }
-        //MPACKET(NAME: name, <typestr: eventStr>, SEQNUM: sequenceNumber)
-        String retString = String.format("MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s)", name, 
-            typeStr, eventStr, sequenceNumber);
+        //MPACKET(NAME: name, <typestr: eventStr>, SEQNUM: sequenceNumber, VC: this.clock)
+        String retString = String.format(
+                "MPACKET(NAME: %s, <%s: %s>, SEQNUM: %s, VC: %s)",
+                name,
+                typeStr,
+                eventStr,
+                sequenceNumber,
+                this.clock);
         return retString;
     }
 

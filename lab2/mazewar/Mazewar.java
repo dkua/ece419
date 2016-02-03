@@ -24,6 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Hashtable;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -75,6 +76,10 @@ public class Mazewar extends JFrame {
      * A map of {@link Client} clients to client name.
      */
     private Hashtable<String, Client> clientTable = null;
+    /**
+     * A map of {@link Client} clients to {@Link VectorClock} vector clocks.
+     */
+    public static final ConcurrentHashMap<String, VectorClock> clockTable = new ConcurrentHashMap<String, VectorClock>();
     /**
      * A queue of events.
      */
@@ -145,13 +150,15 @@ public class Mazewar extends JFrame {
                 maze.addClientAt(remoteClient, player.point, player.direction);
                 clientTable.put(player.name, remoteClient);
             }
+            VectorClock vc = new VectorClock(resp.players);
+            clockTable.put(player.name, vc);
         }
 
         // Use braces to force constructors not to be called at the beginning of the
         // constructor.
                 /*
                 {
-                        maze.addClient(new RobotClient("Norby"));
+                        maze.addClient(rc);
                         maze.addClient(new RobotClient("Robbie"));
                         maze.addClient(new RobotClient("Clango"));
                         maze.addClient(new RobotClient("Marvin"));
@@ -278,8 +285,8 @@ public class Mazewar extends JFrame {
     */
     private void startThreads() {
         //Start a new sender thread
-        new Thread(new ClientSenderThread(mSocket, eventQueue)).start();
+        new Thread(new ClientSenderThread(mSocket, eventQueue, clockTable)).start();
         //Start a new listener thread
-        new Thread(new ClientListenerThread(mSocket, clientTable)).start();
+        new Thread(new ClientListenerThread(mSocket, clientTable, clockTable)).start();
     }
 }

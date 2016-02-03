@@ -1,15 +1,17 @@
 import java.io.IOException;
 import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientListenerThread implements Runnable {
 
     private MSocket mSocket = null;
     private Hashtable<String, Client> clientTable = null;
+    private ConcurrentHashMap<String, VectorClock> clockTable;
 
-    public ClientListenerThread(MSocket mSocket,
-                                Hashtable<String, Client> clientTable) {
+    public ClientListenerThread(MSocket mSocket, Hashtable<String, Client> clientTable, ConcurrentHashMap<String, VectorClock> clockTable) {
         this.mSocket = mSocket;
         this.clientTable = clientTable;
+        this.clockTable = clockTable;
         if (Debug.debug) System.out.println("Instatiating ClientListenerThread");
     }
 
@@ -22,6 +24,8 @@ public class ClientListenerThread implements Runnable {
                 received = (MPacket) mSocket.readObject();
                 System.out.println("Received " + received);
                 client = clientTable.get(received.name);
+                clockTable.put(received.name, received.clock);
+                System.out.println("C");
                 if (received.event == MPacket.UP) {
                     client.forward();
                 } else if (received.event == MPacket.DOWN) {
