@@ -46,6 +46,7 @@ public class Server {
             MSocket mSocket = mServerSocket.accept();
             PriorityBlockingQueue<MPacket> pq = new PriorityBlockingQueue<MPacket>();
             new Thread(new ServerListenerThread(mSocket, pq)).start();
+            //Start a new actioner thread for each new client
             new Thread(new ServerActionThread(eventQueue, pq)).start();
 
             mSocketList[clientCount] = mSocket;
