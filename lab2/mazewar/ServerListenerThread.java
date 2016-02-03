@@ -1,14 +1,14 @@
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class ServerListenerThread implements Runnable {
 
     private MSocket mSocket = null;
-    private BlockingQueue eventQueue = null;
+    private PriorityBlockingQueue<MPacket> pq = null;
 
-    public ServerListenerThread(MSocket mSocket, BlockingQueue eventQueue) {
+    public ServerListenerThread(MSocket mSocket, PriorityBlockingQueue<MPacket> pq) {
         this.mSocket = mSocket;
-        this.eventQueue = eventQueue;
+        this.pq = pq;
     }
 
     public void run() {
@@ -18,9 +18,8 @@ public class ServerListenerThread implements Runnable {
             try {
                 received = (MPacket) mSocket.readObject();
                 if (Debug.debug) System.out.println("Received: " + received);
-                eventQueue.put(received);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                pq.add(received);
+                if (Debug.debug) System.out.println("Enqueued: " + received);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {

@@ -1,12 +1,13 @@
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class Server {
 
     //The maximum of clients that will join
     //Server waits until the max number of clients to join
-    private static final int MAX_CLIENTS = 4;
+    private static final int MAX_CLIENTS = 2;
     private MServerSocket mServerSocket = null;
     private int clientCount; //The number of clients before game starts
     private MSocket[] mSocketList = null; //A list of MSockets
@@ -43,8 +44,9 @@ public class Server {
         while (clientCount < MAX_CLIENTS) {
             //Start a new listener thread for each new client connection
             MSocket mSocket = mServerSocket.accept();
-
-            new Thread(new ServerListenerThread(mSocket, eventQueue)).start();
+            PriorityBlockingQueue<MPacket> pq = new PriorityBlockingQueue<MPacket>();
+            new Thread(new ServerListenerThread(mSocket, pq)).start();
+            new Thread(new ServerActionThread(eventQueue, pq)).start();
 
             mSocketList[clientCount] = mSocket;
 

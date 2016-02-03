@@ -122,6 +122,7 @@ public class Mazewar extends JFrame {
         MPacket hello = new MPacket(name, MPacket.HELLO, MPacket.HELLO_INIT);
         hello.mazeWidth = mazeWidth;
         hello.mazeHeight = mazeHeight;
+        hello.sequenceNumber = -1;
 
         if (Debug.debug) System.out.println("Sending hello");
         mSocket.writeObject(hello);
