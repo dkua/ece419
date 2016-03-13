@@ -1,0 +1,45 @@
+Team
+====
+David Kua - 998484536 - kuadavid
+** Permission was granted by Professor Amza to do this lab alone. **
+
+
+Introduction
+============
+This implements a client-server Mazewar game with four "human" players.
+
+
+Architecture
+============
+The server starts and listens on some port.
+
+When a client contacts the server, the server spawns a 
+ServerListenerThread. Server.java defines the MAX_CLIENTS constant 
+that determines the maximum number of clients that join.
+
+When the expected number of clients have contacted the 
+server, the server spawns a single ServerSenderThreads, that broadcasts 
+the name and location of all the clients (this requires that names
+must be unique).
+
+When an event happens, it is sent to the server. The server
+stamps the event with a global sequence number and broadcasts to all 
+hosts.
+
+Each client retrieves the server sent event and adds it to a PriorityBlockingQueue in the listening thread. Another thread called the Action thread peeks into the queue and checks the seq number against the last one it has acted upon. If it's the next event in line then the event will be popped out of the queue and acted upon. This allows the clients to order the events in a reasonable amount of time with the server acting as the global timekeeper.
+
+
+Making and Running
+==================
+To make the project run
+make
+
+Make sure to have a JAVA_HOME environment variable set, this should usually be /usr or whatever your </path/to/java/> is.
+
+To run the server:
+./server.sh <listening port>
+
+To run the clients: 
+./run.sh <server host> <server port>
+
+
