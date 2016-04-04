@@ -1,9 +1,9 @@
 #!/bin/bash
 
-ZK_SCRIPT=/home/mike/myzk/bin/zkServer.sh
-ZK_DATADIR=/home/mike/myzk/data-dir
+ZK_SCRIPT=$HOME/myzk/bin/zkServer.sh
+ZK_DATADIR=$HOME/myzk/data-dir
 ZK_HOST=localhost
-ZK_PORT=5999
+ZK_PORT=8437
 
 TIMEOUT=240
 
