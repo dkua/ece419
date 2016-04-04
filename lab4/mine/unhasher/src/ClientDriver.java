@@ -170,53 +170,31 @@ public class ClientDriver {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws IOException {
+		String cmd = null;
+        String hash = null;
 
-		if(args.length == 2) {
-			zkhost = args[0];
-			zkport = Integer.parseInt(args[1]);
-
+		if(args.length == 3) {
+			String[] s = args[0].split(":");
+			zkhost = s[0];
+			zkport = Integer.parseInt(s[1]);
+			cmd = args[1];
+			hash = args[2];
 		} else {
 			System.err.println("ERROR: Invalid arguments!");
 			System.exit(-1);
 		}
-		
+
 		ClientDriver cd = new ClientDriver();
 		cd.registerToService();
-
-		br = new BufferedReader (new InputStreamReader(System.in));
-
-		// in loop, wait for client input 
-		String buf, cmd, hash, result;
-		String usage = "Usage: \tjob [hash] OR status [hash] OR quit/q";
 		TaskPacket toZk = null;
-
-		System.out.println("Unhasher started! " + usage);
-		System.out.print("> ");
-		while ((buf = br.readLine()) != null ) {
-			String[] tokens = buf.split("[ ]+");
-			cmd = tokens[0].toLowerCase();
-			
-			if (cmd.equals("quit") || cmd.equals("q") ) {
-				debug("quitting...");
-				return;
-			} else if (tokens.length < 2) {
-				System.out.println(usage);
-				System.out.print("> ");
-				continue;
-			}
-			
-			hash = tokens[1];
-			
-			if (cmd.equals("job")) {
-				toZk = new TaskPacket(id, TaskPacket.TASK_SUBMIT, hash);
-				cd.sendPacket(toZk);
-			} else if (cmd.equals("status")) {
-				toZk = new TaskPacket(id, TaskPacket.TASK_QUERY, hash);
-				cd.sendPacket(toZk);
-				result = cd.waitForStatus();
-				System.out.println(result);
-			} else System.out.println(usage);
-			System.out.print("> ");
+		if (cmd.equals("job")) {
+			toZk = new TaskPacket(id, TaskPacket.TASK_SUBMIT, hash);
+			cd.sendPacket(toZk);
+		} else if (cmd.equals("status")) {
+			toZk = new TaskPacket(id, TaskPacket.TASK_QUERY, hash);
+			cd.sendPacket(toZk);
+			String result = cd.waitForStatus();
+			System.out.println(result);
 		}
 	}
 
