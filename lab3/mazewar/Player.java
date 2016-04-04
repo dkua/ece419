@@ -10,11 +10,21 @@ public class Player implements Serializable {
     public Point point = null;
     public int direction;
     public String name;
+    public String id;
+    public int port;
 
     public Player(String name, Point point, int direction) {
         this.point = point;
         this.name = name;
         this.direction = direction;
+    }
+
+    public Player(String name, Point point, int direction, String id, int port) {
+        this.point = point;
+        this.name = name;
+        this.direction = direction;
+        this.id = id;
+        this.port = port;
     }
 
     public String toString() {

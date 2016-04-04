@@ -69,13 +69,14 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
      * The thread used to manage {@link Projectile}s.
      */
     private final Thread thread;
+    Collection deadPrj = new HashSet();
 
     /**
      * Create a {@link Maze}.
      *
      * @param point Treat the {@link Point} as a magintude specifying the
      *              size of the maze.
-     * @param seed  Initial seed for thenrandom number generator.
+     * @param seed  Initial seed for the random number generator.
      */
     public MazeImpl(Point point, long seed) {
         maxX = point.getX();
@@ -101,10 +102,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         randomGen = new Random(seed);
 
         // Build the maze starting at the corner
-        if (seed == 0)
-            buildEmptyMaze();
-        else
-            buildMaze(new Point(0, 0));
+        buildMaze(new Point(0, 0));
 
         thread.start();
     }
@@ -237,36 +235,6 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         addClient(client, point);
     }
 
-    public synchronized void addClientAt(Client client, Point point,
-                                         int direction) {
-        //Adapted from addClient(Client client)
-        //addClient(client, point);
-        assert (client != null);
-        Direction d = null;
-        if (direction == Player.North) {
-            d = Direction.North;
-        } else if (direction == Player.South) {
-            d = Direction.South;
-        } else if (direction == Player.East) {
-            d = Direction.East;
-        } else {
-            d = Direction.West;
-        }
-
-        DirectedPoint dPoint = new DirectedPoint(point, d);
-        assert (checkBounds(point));
-
-        CellImpl cell = getCellImpl(point);
-        cell.setContents(client);
-        clientMap.put(client, dPoint);
-        client.registerMaze(this);
-        client.addClientListener(this);
-        update();
-        notifyClientAdd(client);
-
-
-    }
-
     public synchronized Point getClientPoint(Client client) {
         assert (client != null);
         Object o = clientMap.get(client);
@@ -281,8 +249,6 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         DirectedPoint dp = (DirectedPoint) o;
         return dp.getDirection();
     }
-        
-        /* Internals */
 
     public synchronized void removeClient(Client client) {
         assert (client != null);
@@ -297,6 +263,8 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         update();
         notifyClientRemove(client);
     }
+        
+        /* Internals */
 
     public synchronized boolean clientFire(Client client) {
         assert (client != null);
@@ -390,30 +358,44 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
     }
 
     /**
+     * Move missiles
+     */
+    public void missileTick() {
+        if (!projectileMap.isEmpty()) {
+            Iterator it = projectileMap.keySet().iterator();
+            synchronized (projectileMap) {
+                while (it.hasNext()) {
+                    Object o = it.next();
+                    assert (o instanceof Projectile);
+
+                    //Make sure we haven't already removed the projective
+                    //Note: original code doesn't have this check and as a
+                    //result, bullets sometimes get stuck
+                    if (!deadPrj.contains(o)) {
+                        deadPrj.addAll(moveProjectile((Projectile) o));
+                    } else {
+                        System.out.println("Ignoring dead projectile");
+                    }
+                }
+                Iterator it2 = deadPrj.iterator();
+                while (it2.hasNext()) {
+                    Object o = it2.next();
+                    assert (o instanceof Projectile);
+                    Projectile prj = (Projectile) o;
+                    projectileMap.remove(prj);
+                    clientFired.remove(prj.getOwner());
+                }
+                deadPrj.clear();
+            }
+        }
+    }
+
+    /**
      * Control loop for {@link Projectile}s.
      */
     public void run() {
-        Collection deadPrj = new HashSet();
         while (true) {
-            if (!projectileMap.isEmpty()) {
-                Iterator it = projectileMap.keySet().iterator();
-                synchronized (projectileMap) {
-                    while (it.hasNext()) {
-                        Object o = it.next();
-                        assert (o instanceof Projectile);
-                        deadPrj.addAll(moveProjectile((Projectile) o));
-                    }
-                    it = deadPrj.iterator();
-                    while (it.hasNext()) {
-                        Object o = it.next();
-                        assert (o instanceof Projectile);
-                        Projectile prj = (Projectile) o;
-                        projectileMap.remove(prj);
-                        clientFired.remove(prj.getOwner());
-                    }
-                    deadPrj.clear();
-                }
-            }
+            // Missle updated by server
             try {
                 thread.sleep(200);
             } catch (Exception e) {
@@ -486,7 +468,10 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         assert (client != null);
         assert (checkBounds(point));
         CellImpl cell = getCellImpl(point);
-        Direction d = Direction.north();
+        Direction d = Direction.random();
+        while (cell.isWall(d)) {
+            d = Direction.random();
+        }
         cell.setContents(client);
         clientMap.put(client, new DirectedPoint(point, d));
         client.registerMaze(this);
@@ -519,7 +504,10 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
             point = new Point(randomGen.nextInt(maxX), randomGen.nextInt(maxY));
             cell = getCellImpl(point);
         }
-        Direction d = Direction.north();
+        Direction d = Direction.random();
+        while (cell.isWall(d)) {
+            d = Direction.random();
+        }
         cell.setContents(target);
         clientMap.put(target, new DirectedPoint(point, d));
         update();
@@ -759,46 +747,6 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
             buildMaze(newPoint);
             d = pickNeighbor(point);
         }
-    }
-
-    /**
-     * Build a {@link Maze} with only
-     * the external boundaries.
-     */
-    private void buildEmptyMaze() {
-        //Start from the SW (0,0) corner
-        //iterate until NE(maxX, maxY) and remove all walls
-        //Remove all the interior walls
-        for (int x = 1; x < maxX - 1; x++) {
-            for (int y = 1; y < maxY - 1; y++) {
-                Point p = new Point(x, y);
-                removeWall(p, Direction.North);
-                removeWall(p, Direction.East);
-                removeWall(p, Direction.South);
-                removeWall(p, Direction.West);
-            }
-        }
-        //Remove all the exterior walls
-        for (int x = 1; x < maxX - 1; x++) {
-            Point p = new Point(x, 0);
-            removeWall(p, Direction.East);
-            removeWall(p, Direction.West);
-
-            p = new Point(x, maxY - 1);
-            removeWall(p, Direction.East);
-            removeWall(p, Direction.West);
-        }
-
-        for (int y = 1; y < maxY - 1; y++) {
-            Point p = new Point(0, y);
-            removeWall(p, Direction.North);
-            removeWall(p, Direction.South);
-
-            p = new Point(maxX - 1, y);
-            removeWall(p, Direction.North);
-            removeWall(p, Direction.South);
-        }
-
     }
 
     /**

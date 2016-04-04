@@ -29,7 +29,8 @@ public class ServerActionThread implements Runnable {
                     current = pq.poll();
                     LookingFor += 1;
                 }
-                if (Debug.debug) System.out.println(String.format("RUNNING %s, SIZE %s", current.sequenceNumber, pq.size()));
+                if (Debug.debug)
+                    System.out.println(String.format("RUNNING %s, SIZE %s", current.sequenceNumber, pq.size()));
                 eventQueue.put(current);
             } catch (InterruptedException e) {
                 e.printStackTrace();

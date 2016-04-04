@@ -32,7 +32,8 @@ public class ClientActionThread implements Runnable {
                 current = pq.poll();
                 LastSeen += 1;
             }
-            if (Debug.debug) System.out.println(String.format("RUNNING %s, SIZE %s", current.sequenceNumber, pq.size()));
+            if (Debug.debug)
+                System.out.println(String.format("RUNNING %s, SIZE %s", current.sequenceNumber, pq.size()));
             client = clientTable.get(current.name);
             if (current.event == MPacket.UP) {
                 client.forward();

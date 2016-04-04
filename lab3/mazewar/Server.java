@@ -7,7 +7,7 @@ public class Server {
 
     //The maximum of clients that will join
     //Server waits until the max number of clients to join
-    private static final int MAX_CLIENTS = 2;
+    private static final int MAX_CLIENTS = 4;
     private MServerSocket mServerSocket = null;
     private int clientCount; //The number of clients before game starts
     private MSocket[] mSocketList = null; //A list of MSockets
