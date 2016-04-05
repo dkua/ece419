@@ -19,6 +19,8 @@ for ((i=1;i<4;i+=1)); do
     start_worker "worker-$i"
 done
 
+echo "\n\ngonna run now\n\n"
+
 run
 
 kill_proc "fs"

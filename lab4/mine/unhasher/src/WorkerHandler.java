@@ -107,7 +107,7 @@ public class WorkerHandler extends Thread{
 	this.client_hash = path.split("/")[2];
 
 	this.w_id_string = w_id_string;
-	this.w_id = Integer.parseInt(w_id_string);
+	w_id = Integer.parseInt(w_id_string);
 
 	// Register to /jobs/[job name]
 	registerToJob();

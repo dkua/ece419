@@ -168,7 +168,7 @@ public class FileServer {
 	public FileServer(String hosts, String port){
 		debug("Connecting to Zookeeper");
 
-		this.port = Integer.parseInt(port);
+		FileServer.port = Integer.parseInt(port);
 
 		// Try to connect to ZkConnector
 		zkc = new ZkConnector();		
