@@ -40,9 +40,7 @@ public class FileServer {
     static String ZK_REQUESTS = "/requests";
     static String ZK_RESULTS = "/results";
     // RequestTracker constants
-    static String TRACKER_PRIMARY = "primary";
-    static String TRACKER_BACKUP = "backup";
-    static String mode;
+    static String mode = "BACKUP";
     static boolean debug = true;
     static CountDownLatch modeSignal = new CountDownLatch(1);
     private static Integer port;
@@ -126,21 +124,12 @@ public class FileServer {
     }
 
     private void start() {
-
+        boolean listening = true;
         try {
             debug("start: Listening for incoming connections...");
-            final FileServerHandler fh;
-            fh = new FileServerHandler(socket.accept(), zkc, zk, dictionary);
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        System.err.println("ERROR: FileServer could not close socket");
-                    }
-                }
-            });
-            fh.start();
+            while (listening) {
+                new FileServerHandler(socket.accept(), zkc, zk, dictionary).start();
+            }
         } catch (IOException e) {
             System.err.println("ERROR: FileServer could not listen on port!");
             System.exit(-1);
@@ -188,7 +177,7 @@ public class FileServer {
             );
             if (ret == Code.OK) {
                 System.out.println("setPrimary: I'm the primary file server.");
-
+                mode = "PRIMARY";
                 modeSignal.countDown();
 
                 // Place hostname and port into that folder

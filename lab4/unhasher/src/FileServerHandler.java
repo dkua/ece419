@@ -86,6 +86,7 @@ public class FileServerHandler extends Thread {
                 // Your job is done!
                 break;
             }
+            this.cSocket.close();
         } catch (Exception e) {
             debug("Oh no! Could not work out PartitionPacket");
             e.printStackTrace();
