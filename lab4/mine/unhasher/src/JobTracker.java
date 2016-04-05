@@ -66,7 +66,7 @@ public class JobTracker extends Thread implements Watcher {
             System.err.println("ERROR: Invalid JobTracker arguments!");
             System.exit(-1);
         }
-
+        zkAddr = args[0];
         JobTracker jt = new JobTracker();
         if (mode == TRACKER_BACKUP) {
             debug("backup setting watch on " + ZK_TRACKER + "/" + TRACKER_PRIMARY);
