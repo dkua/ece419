@@ -495,7 +495,7 @@ public class JobTracker extends Thread implements Watcher {
                     data = zk.getData("/tasks/" + path, false, status);
                     if (status != null) {
                         dataStr = byteToString(data);
-                        //debug(String.format("task in path %s/%s is %s", ZK_TASKS, path, dataStr));
+                        debug(String.format("Task in path %s/%s is %s", ZK_TASKS, path, dataStr));
                         handleTask(new TaskPacket(dataStr), path);
                     }
                 }
