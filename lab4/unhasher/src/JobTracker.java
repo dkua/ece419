@@ -268,6 +268,9 @@ public class JobTracker extends Thread implements Watcher {
                 debug("ID" + p.c_id);
                 debug("HASH" + p.hash);
                 ArrayList<String> jobs = clientJobs.get(p.c_id);
+                if (jobs == null) {
+                    debug("FUCKING " + p.c_id);
+                }
                 if (!jobs.contains(p.hash)) {
                     addJobToMap(p);
                     UseCount ucount = new UseCount(jobPath);
