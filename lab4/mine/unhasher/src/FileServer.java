@@ -93,7 +93,7 @@ public class FileServer {
         }
 
         FileServer fs = new FileServer(args[0]);
-        fs.dictionaryPath = args[1];
+        fs.dictionaryPath = new File(args[1]).getAbsolutePath();
         fs.setPrimary();
 
         try {
@@ -184,7 +184,7 @@ public class FileServer {
 
                 // Place hostname and port into that folder
                 try {
-                    String data = InetAddress.getLocalHost().getHostName() + ":" + socket.getLocalPort();
+                    String data = socket.getInetAddress().getHostName() + ":" + socket.getLocalPort();
                     debug("setPrimary: " + data);
 
                     stat = zk.setData(myPath, data.getBytes(), -1);
