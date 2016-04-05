@@ -1,4 +1,3 @@
-import com.sun.javafx.tk.Toolkit;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.Watcher.Event.EventType;
 
