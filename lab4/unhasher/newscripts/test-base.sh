@@ -3,7 +3,7 @@
 ZK_SCRIPT=$HOME/myzk/bin/zkServer.sh
 ZK_DATADIR=$HOME/myzk/data-dir
 ZK_HOST=0.0.0.0
-ZK_PORT=8759
+ZK_PORT=$ZKPORT
 
 TIMEOUT=240
 
