@@ -190,7 +190,7 @@ public class FileServer {
 
                 // Place hostname and port into that folder
                 try {
-                    String data = socket.getInetAddress().getHostName() + ":" + socket.getLocalPort();
+                    String data = socket.getInetAddress() + ":" + socket.getLocalPort();
                     debug("setPrimary: " + data);
 
                     stat = zk.setData(myPath, data.getBytes(), -1);

@@ -287,18 +287,9 @@ public class Worker {
         for (String path : newJobs) {
             debug("handle: Sending job " + path);
 
-            final WorkerHandler wh;
             // Spawn a thread
             try {
-                wh = new WorkerHandler(zkc, jobsPath + "/" + path, w_id_string);
-                Runtime.getRuntime().addShutdownHook(new Thread() {
-                    @Override
-                    public void run() {
-                        System.out.println("Interrupt received, killing Worker");
-                        wh.shutdown();
-                    }
-                });
-                wh.start();
+                new WorkerHandler(zkc, jobsPath + "/" + path, w_id_string).start();
             } catch (Exception e) {
                 debug("handle: Couldn't spawn WorkerHandler");
             }
