@@ -93,8 +93,13 @@ public class FileServer {
         }
 
         FileServer fs = new FileServer(args[0]);
-        fs.dictionaryPath = new File(args[1]).getAbsolutePath();
-        fs.setPrimary();
+        try {
+            fs.dictionaryPath = new File(args[1]).getCanonicalPath();
+            fs.setPrimary();
+        } catch (IOException e) {
+            System.err.println("ERROR: Could not figure out dictionary path!");
+            System.exit(-1);
+        }
 
         try {
             if (!fs.isPrimary) {
@@ -121,17 +126,18 @@ public class FileServer {
 
     private void start() {
 
-        boolean listening = true;
-
         try {
             socket = new ServerSocket(0);
 
             debug("start: Listening for incoming connections...");
-            while (listening) {
-                new FileServerHandler(socket.accept(), zkc, zk, dictionary).start();
-            }
-
-            socket.close();
+            final FileServerHandler fh;
+            fh = new FileServerHandler(socket.accept(), zkc, zk, dictionary);
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                   fh.shutdown();
+                }
+            });
+            fh.start();
         } catch (IOException e) {
             System.err.println("ERROR: Could not listen on port!");
             System.exit(-1);

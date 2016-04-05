@@ -365,6 +365,10 @@ public class WorkerHandler extends Thread {
         }
     }
 
+    public void shutdown() {
+        exit();
+    }
+
     private void setData(String p, String message) {
         try {
             debug("setData: " + message);

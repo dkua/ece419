@@ -76,8 +76,8 @@ public class Worker {
         Worker w = new Worker(args[0]);
 
         // Make your own subfolder in the Worker folder
-        // Keeps count of the amount of workers currently present
-        w.registerWorker();
+                // Keeps count of the amount of workers currently present
+                w.registerWorker();
 
         // Start working!
         w.start();
@@ -287,13 +287,21 @@ public class Worker {
         for (String path : newJobs) {
             debug("handle: Sending job " + path);
 
+            final WorkerHandler wh;
             // Spawn a thread
             try {
-                new WorkerHandler(zkc, jobsPath + "/" + path, w_id_string).start();
+                wh = new WorkerHandler(zkc, jobsPath + "/" + path, w_id_string);
+                Runtime.getRuntime().addShutdownHook(new Thread() {
+                    @Override
+                    public void run() {
+                        System.out.println("Interrupt received, killing Worker");
+                        wh.shutdown();
+                    }
+                });
+                wh.start();
             } catch (Exception e) {
                 debug("handle: Couldn't spawn WorkerHandler");
             }
-
             // Add to oldJobs list
             oldJobs.add(path);
         }
