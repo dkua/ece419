@@ -52,7 +52,11 @@ public class ClientDriver {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 3) {
-            System.err.println("ERROR: Invalid ClientDriver arguments: " + args[0] + "," + args[1] + "," + args[2]);
+            String err = "ERROR: Invalid ClientDriver arguments:";
+            for (String s : args) {
+                err = err + " " + s;
+            }
+            System.err.println(err);
             System.exit(-1);
         }
         if (args[1].equals("job") || args[1].equals("status")) {
