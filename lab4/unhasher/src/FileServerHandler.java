@@ -93,13 +93,4 @@ public class FileServerHandler extends Thread {
 
         debug("run: Exitting");
     }
-
-    public void shutdown() {
-        try {
-            this.cSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 }

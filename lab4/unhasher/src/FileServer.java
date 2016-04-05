@@ -133,12 +133,16 @@ public class FileServer {
             fh = new FileServerHandler(socket.accept(), zkc, zk, dictionary);
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
-                   fh.shutdown();
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        System.err.println("ERROR: FileServer could not close socket");
+                    }
                 }
             });
             fh.start();
         } catch (IOException e) {
-            System.err.println("ERROR: Could not listen on port!");
+            System.err.println("ERROR: FileServer could not listen on port!");
             System.exit(-1);
         }
     }
