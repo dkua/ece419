@@ -48,8 +48,8 @@ public class Worker {
     Semaphore workerSem = new Semaphore(1);
     List<String> jobs;
     List<String> oldJobs = new ArrayList();
-    int w_id;
-    String w_id_string;
+    static int w_id;
+    static String w_id_string;
 
     // Start up ZooKeeper connection
     public Worker(String hosts) {
@@ -84,8 +84,8 @@ public class Worker {
     }
 
     private static void debug(String s) {
-        if (debug && mode != null) {
-            System.out.println(String.format("WORKER_%s: %s", mode.toUpperCase(), s));
+        if (debug && w_id_string != null) {
+            System.out.println(String.format("WORKER_%s: %s", w_id_string, s));
         } else {
             System.out.println(String.format("WORKER_?: %s", s));
         }
@@ -260,9 +260,9 @@ public class Worker {
             dataStr = dataStr.split(":")[0];
 
             debug("isJobDone: " + p + " dataStr: " + dataStr);
-            if (dataStr.equals("success") || dataStr.equals("fail"))
+            if (dataStr.equals("success") || dataStr.equals("fail")) {
                 return true;
-
+            }
         } catch (Exception e) {
             debug("isJobDone: Didn't work.");
         }
