@@ -1,20 +1,11 @@
-import com.sun.corba.se.spi.activation.Server;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.data.Stat;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -39,8 +30,6 @@ public class JobTracker extends Thread implements Watcher {
     static ServerSocket socket;
 
     // Client tracking
-    static ArrayList<String> clientList = new ArrayList<String>();
-    static HashMap<String, ArrayList<String>> clientJobs = new HashMap<String, ArrayList<String>>();
     static boolean debug = true;
     static Lock debugLock = new ReentrantLock();
 

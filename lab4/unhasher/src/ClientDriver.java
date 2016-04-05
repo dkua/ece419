@@ -24,7 +24,7 @@ public class ClientDriver {
     ObjectOutputStream output;
 
     static boolean debug = true;
-    static String PRIMARY = "/primary_tracker";
+    static String PRIMARY = "/tracker/primary";
 
     public ClientDriver(String address) {
         // Connect to ZooKeeper
