@@ -265,6 +265,8 @@ public class JobTracker extends Thread implements Watcher {
                         CreateMode.PERSISTENT);
             } else {
                 // if in result, return result
+                debug("ID" + p.c_id);
+                debug("HASH" + p.hash);
                 if (!clientJobs.get(p.c_id).contains(p.hash)) {
                     addJobToMap(p);
                     UseCount ucount = new UseCount(jobPath);
