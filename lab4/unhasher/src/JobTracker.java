@@ -71,13 +71,18 @@ public class JobTracker extends Thread implements Watcher {
             System.exit(-1);
         }
         zkAddr = args[0];
-        JobTracker jt = new JobTracker();
+        final JobTracker jt = new JobTracker();
         if (mode == TRACKER_BACKUP) {
             debug("backup setting watch on " + ZK_TRACKER + "/" + TRACKER_PRIMARY);
             zk.exists(ZK_TRACKER + "/" + TRACKER_PRIMARY, jt);    // primary watch
             modeSignal.await();
         }
-        jt.listen();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                jt.listen();
+            }
+        }).start();
     }
 
     private static void debug(String s) {
