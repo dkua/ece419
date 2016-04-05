@@ -188,6 +188,7 @@ public class ClientDriver {
 		cd.registerToService();
 		TaskPacket toZk = null;
 		if (cmd.equals("job")) {
+            System.out.println("New job on hash " + hash);
 			toZk = new TaskPacket(id, TaskPacket.TASK_SUBMIT, hash);
 			cd.sendPacket(toZk);
 		} else if (cmd.equals("status")) {
