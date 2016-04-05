@@ -40,13 +40,12 @@ public class ClientDriver {
         this.watcher = new Watcher() {
             @Override
             public void process(WatchedEvent event) {
+                debug("WATCHING");
                 handleEvent(event);
+                debug("WATCHED");
             }
         };
-        while (result == null) {
-            try{ Thread.sleep(1000); } catch (Exception e) {}
-            result = sendTask();
-        }
+        result = sendTask();
         System.out.println(result);
     }
 
