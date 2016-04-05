@@ -1,78 +1,68 @@
+import com.sun.javafx.tk.Toolkit;
 import org.apache.zookeeper.*;
-import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.data.Stat;
 
-import java.io.BufferedReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.CountDownLatch;
+import java.net.Socket;
 
 
 public class ClientDriver {
-
-    static String id;    // used with znode /client/[id]
-    static BufferedReader br = null;
-    static ZooKeeper zk;
-    static String zkAddr;
-    static String lpath;
-    // ZooKeeper directories
-    static String ZK_CLIENTS = "/clients";
-    static String ZK_TASK = "/tasks";
-    static String ZK_SUBTASK = "/t";
-    static boolean debug = true;
-    // ZooKeeper resources
+    ZooKeeper zk;
     ZkConnector zkc;
-    CountDownLatch regSig = new CountDownLatch(1);
+    Watcher watcher;
+    static String cmd;
+    static String hash;
+    static String result;
 
-    public ClientDriver() {
+    Socket socket;
+    String hostname;
+    int port;
+    ObjectInputStream input;
+    ObjectOutputStream output;
 
-        //connect to ZooKeeper
-        zkc = new ZkConnector();
+    static boolean debug = true;
+    static String PRIMARY = "/primary_tracker";
+
+    public ClientDriver(String address) {
+        // Connect to ZooKeeper
+        this.zkc = new ZkConnector();
         try {
-            debug("Connecting to ZooKeeper instance zk");
-            debug(zkAddr);
-            zkc.connect(zkAddr);
-            zk = zkc.getZooKeeper();
-            debug("Connected to ZooKeeper instance zk");
-
+            debug("Connecting to ZooKeeper instance at " + address);
+            this.zkc.connect(address);
+            this.zk = this.zkc.getZooKeeper();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        this.watcher = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                handleEvent(event);
+            }
+        };
+        while (result == null) {
+            try{ Thread.sleep(5000); } catch (Exception e) {}
+            sendTask();
+        }
+        System.out.println(result);
     }
 
-    /**
-     * @param args
-     * @throws IOException
-     */
     public static void main(String[] args) throws IOException {
         if (args.length != 3) {
-            System.err.println("ERROR: Invalid arguments!");
+            System.err.println("ERROR: Invalid ClientDriver arguments: " + args);
             System.exit(-1);
         }
-        zkAddr = args[0];
-        String cmd = args[1];
-        String hash = args[2];
-
-        ClientDriver cd = new ClientDriver();
-        cd.registerToService();
-        TaskPacket toZk = null;
-        if (cmd.equals("job")) {
-            System.out.println("New job on hash " + hash);
-            toZk = new TaskPacket(id, TaskPacket.TASK_SUBMIT, hash);
-            cd.sendPacket(toZk);
-        } else if (cmd.equals("status")) {
-            toZk = new TaskPacket(id, TaskPacket.TASK_QUERY, hash);
-            cd.sendPacket(toZk);
-            String result = cd.waitForStatus();
-            System.out.println(result);
+        if (args[1].equals("job") || args[1].equals("status")) {
+            cmd = args[1];
+            hash = args[2];
         } else {
-            System.err.println("ERROR: Invalid command type!");
+            System.err.println("ERROR: Invalid command type: " + args[1]);
         }
+        ClientDriver cd = new ClientDriver(args[0]);
     }
 
     private static void debug(String s) {
@@ -81,100 +71,72 @@ public class ClientDriver {
         }
     }
 
-    public void registerToService() {
-
-        try {
-            Stat stat = zk.exists(ZK_CLIENTS, new Watcher() {
-
-                @Override
-                public void process(WatchedEvent event) {
-                    boolean isNodeCreated = event.getType().equals(EventType.NodeCreated);
-
-                    if (isNodeCreated) {
-                        regSig.countDown();
-                    } else {
-                        debug("huu?");
+    private void handleEvent(WatchedEvent event) {
+        String path = event.getPath();
+        EventType type = event.getType();
+        if(path.equalsIgnoreCase(PRIMARY)) {
+            if (type == EventType.NodeDeleted) {
+                debug(PRIMARY + " deleted!");
+                disconnect();
+            }
+            if (type == EventType.NodeCreated) {
+                debug(PRIMARY + "created!");
+                byte[] data = null;
+                while (data == null) {
+                    try {
+                        data = this.zk.getData(PRIMARY, false, null);
+                        String dataStr = byteToString(data);
+                        this.hostname = dataStr.split(":")[0];
+                        this.port = Integer.parseInt(dataStr.split(":")[1]);
+                        connect();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
-            });
-            if (stat == null) {
-                regSig.await();
             }
-
-            String path = zk.create(ZK_CLIENTS + "/",
-                    null,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.EPHEMERAL_SEQUENTIAL);
-
-            id = path.split("/")[2];
-
-        } catch (KeeperException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void sendPacket(TaskPacket p) {
-        String data = p.taskToString();
-
-        Code ret = createTaskPath(data);
-
-        if (ret != Code.OK) { // debug("task sent!");
-            System.out.println("request could not be sent!");
-            return;
-        }
-
-        if (p.packet_type == TaskPacket.TASK_SUBMIT) {
-            System.out.println("job submitted");
         }
     }
 
-    private KeeperException.Code createTaskPath(String data) {
+    private void connect() {
         try {
-            byte[] byteData = null;
-            if (data != null) {
-                byteData = data.getBytes();
-            }
-            lpath = zk.create(ZK_TASK + ZK_SUBTASK,
-                    byteData,
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT_SEQUENTIAL);
-
-        } catch (KeeperException e) {
-            return e.code();
+            this.socket = new Socket(this.hostname, this.port);
+            debug("Connected to " + this.hostname + ":" + this.port);
+            this.input = new ObjectInputStream(this.socket.getInputStream());
+            this.output = new ObjectOutputStream(this.socket.getOutputStream());
         } catch (Exception e) {
-            return KeeperException.Code.SYSTEMERROR;
+            debug("connectToTracker: Couldn't add the streams.");
+            e.printStackTrace();
         }
-        return KeeperException.Code.OK;
     }
 
-    private String waitForStatus() {
-        String path = lpath + "/res";
-
-        byte[] data;
-        String result = null;
-        Stat stat = null;
-
+    private void disconnect() {
         try {
-            // wait for query result
-            zkc.listenToPath(path);
-
-            //result is back, get it
-            data = zk.getData(path, false, stat);
-            result = byteToString(data);
-            zk.delete(path, 0);        //delete result from /tasks/t#
-            zk.delete(lpath, 0);    // delete query /tasks
-
-        } catch (KeeperException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+            this.socket.close();
+            this.socket = null;
+            this.input.close();
+            this.output.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return result;
+    }
+
+    private boolean sendTask() {
+        TaskPacket packet;
+        try {
+            if (cmd.equals("job")) {
+                packet = new TaskPacket(TaskPacket.SUBMIT, hash);
+            } else {
+                packet = new TaskPacket(TaskPacket.STATUS, hash);
+            }
+            this.output.writeObject(packet);
+            TaskPacket response = (TaskPacket) this.input.readObject();
+            result = response.result;
+            disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public String byteToString(byte[] b) {
@@ -188,6 +150,4 @@ public class ClientDriver {
         }
         return s;
     }
-
-
 }

@@ -65,6 +65,9 @@ public class WorkerHandler extends Thread {
 
     Semaphore sem = new Semaphore(1);
 
+    /**
+     * @param args
+     */
     public WorkerHandler(ZkConnector zkc, String path, String w_id_string) throws IOException {
         super("WorkerHandler");
 
