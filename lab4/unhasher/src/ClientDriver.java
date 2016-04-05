@@ -136,7 +136,6 @@ public class ClientDriver {
             result = response.result;
             disconnect();
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
         return true;
