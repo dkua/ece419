@@ -5,6 +5,7 @@ import org.apache.zookeeper.data.Stat;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -57,7 +58,11 @@ public class JobTracker extends Thread implements Watcher {
         try {
             debug("start: Listening for incoming connections...");
             while (listening) {
-                new JobTrackerHandler(socket.accept(), zkc, zk).start();
+                Socket cSocket = socket.accept();
+                if (cSocket != null) {
+                    debug("Got socket!");
+                    new JobTrackerHandler(cSocket, zkc, zk).start();
+                }
             }
         } catch (IOException e) {
             System.err.println("ERROR: JobTracker could not listen on port!");

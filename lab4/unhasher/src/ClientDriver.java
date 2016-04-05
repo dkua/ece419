@@ -44,8 +44,8 @@ public class ClientDriver {
             }
         };
         while (result == null) {
-            try{ Thread.sleep(5000); } catch (Exception e) {}
-            sendTask();
+            try{ Thread.sleep(1000); } catch (Exception e) {}
+            result = sendTask();
         }
         System.out.println(result);
     }
@@ -123,7 +123,7 @@ public class ClientDriver {
         }
     }
 
-    private boolean sendTask() {
+    private String sendTask() {
         TaskPacket packet;
         try {
             if (cmd.equals("job")) {
@@ -132,13 +132,12 @@ public class ClientDriver {
                 packet = new TaskPacket(TaskPacket.STATUS, hash);
             }
             this.output.writeObject(packet);
-            TaskPacket response = (TaskPacket) this.input.readObject();
-            result = response.result;
+            packet = (TaskPacket) this.input.readObject();
             disconnect();
         } catch (Exception e) {
-            return false;
+            return null;
         }
-        return true;
+        return packet.result;
     }
 
     public String byteToString(byte[] b) {
