@@ -86,6 +86,7 @@ public class ClientDriver {
                 debug(PRIMARY + "created!");
                 byte[] data = null;
                 while (data == null) {
+                    debug("FUCK");
                     try {
                         data = this.zk.getData(PRIMARY, false, null);
                         String dataStr = byteToString(data);
