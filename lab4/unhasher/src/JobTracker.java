@@ -411,7 +411,7 @@ public class JobTracker extends Thread implements Watcher {
                 boolean isNodeDeleted = event.getType().equals(EventType.NodeDeleted);
                 String nodeName = event.getPath().split("/")[2];
 
-                if (isNodeDeleted && !nodeName.equals(TRACKER_PRIMARY)) {
+                if (false && isNodeDeleted && !nodeName.equals(TRACKER_PRIMARY)) {
                     debug("client " + nodeName + " disconnected, clearing its usecounts");
                     ArrayList<String> jobs = clientJobs.get(nodeName);
                     if (jobs != null) {
