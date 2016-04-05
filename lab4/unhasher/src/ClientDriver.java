@@ -1,5 +1,6 @@
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.data.Stat;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -45,7 +46,19 @@ public class ClientDriver {
                 debug("WATCHED");
             }
         };
-        result = sendTask();
+        while (result != null) {
+            Stat stat = null;
+            try {
+                stat = this.zk.exists(PRIMARY, this.watcher);
+            } catch (KeeperException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (stat != null) {
+                result = sendTask();
+            }
+        }
         System.out.println(result);
     }
 
