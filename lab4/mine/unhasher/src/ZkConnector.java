@@ -1,33 +1,32 @@
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.*;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooKeeper.States;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.List;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class ZkConnector implements Watcher {
 
+    // ACL, set to Completely Open
+    protected static final List<ACL> acl = Ids.OPEN_ACL_UNSAFE;
+    static boolean debug = false;
     // ZooKeeper Object
     ZooKeeper zooKeeper;
-    
-    static boolean debug = false;
-
     // To block any operation until ZooKeeper is connected. It's initialized
     // with count 1, that is, ZooKeeper connect state.
     CountDownLatch connectedSignal = new CountDownLatch(1);
-    
-    // ACL, set to Completely Open
-    protected static final List<ACL> acl = Ids.OPEN_ACL_UNSAFE;
+
+    private static void debug(String s) {
+        if (debug) {
+            System.out.println(String.format("ZKCONNECTOR: %s", s));
+        }
+    }
 
     /**
      * Connects to ZooKeeper servers specified by hosts.
@@ -38,14 +37,14 @@ public class ZkConnector implements Watcher {
                 hosts, // ZooKeeper service hosts
                 5000,  // Session timeout in milliseconds
                 this); // watcher - see process method for callbacks
-	    connectedSignal.await();
+        connectedSignal.await();
     }
 
     /**
      * Closes connection with ZooKeeper
      */
     public void close() throws InterruptedException {
-	    zooKeeper.close();
+        zooKeeper.close();
     }
 
     /**
@@ -54,37 +53,37 @@ public class ZkConnector implements Watcher {
     public ZooKeeper getZooKeeper() {
         // Verify ZooKeeper's validity
         if (null == zooKeeper || !zooKeeper.getState().equals(States.CONNECTED)) {
-	        throw new IllegalStateException ("ZooKeeper is not connected.");
+            throw new IllegalStateException("ZooKeeper is not connected.");
         }
         return zooKeeper;
     }
 
     protected Stat exists(String path, Watcher watch) {
-        
-        Stat stat =null;
+
+        Stat stat = null;
         try {
             stat = zooKeeper.exists(path, watch);
-        } catch(Exception e) {
+        } catch (Exception e) {
         }
-        
+
         return stat;
     }
 
     protected KeeperException.Code create(String path, String data, CreateMode mode) {
-        
+
         try {
             byte[] byteData = null;
-            if(data != null) {
+            if (data != null) {
                 byteData = data.getBytes();
             }
             zooKeeper.create(path, byteData, acl, mode);
-            
-        } catch(KeeperException e) {
+
+        } catch (KeeperException e) {
             return e.code();
-        } catch(Exception e) {
+        } catch (Exception e) {
             return KeeperException.Code.SYSTEMERROR;
         }
-        
+
         return KeeperException.Code.OK;
     }
 
@@ -94,57 +93,51 @@ public class ZkConnector implements Watcher {
             connectedSignal.countDown();
         }
     }
-    
-	public String byteToString(byte[] b) {
-		String s = null;
-		if (b != null) {
-			try {
-				s = new String(b, "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-		}
-		return s;
-	}
-    
-    public void listenToPath(final String path){
-		final CountDownLatch nodeCreatedSignal = new CountDownLatch(1);
 
-		try {
-			zooKeeper.exists(
-					path, 
-					new Watcher() {       // Anonymous Watcher
-						@Override
-						public void process(WatchedEvent event) {
-							// check for event type NodeCreated
-							boolean isNodeCreated = event.getType().equals(EventType.NodeCreated);
-							// verify if this is the defined znode
-							boolean isMyPath = event.getPath().equals(path);
-							if (isNodeCreated && isMyPath) {
-								debug(path + " created!");
-								nodeCreatedSignal.countDown();
-							}
-						}
-					});
-		} catch(KeeperException e) {
-			System.out.println(e.code());
-		} catch(Exception e) {
-			System.out.println(e.getMessage());
-		}
+    public String byteToString(byte[] b) {
+        String s = null;
+        if (b != null) {
+            try {
+                s = new String(b, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        return s;
+    }
 
-		debug("Waiting for " + path + " to be created ...");
+    public void listenToPath(final String path) {
+        final CountDownLatch nodeCreatedSignal = new CountDownLatch(1);
 
-		try{       
-			nodeCreatedSignal.await();
-		} catch(Exception e) {
-			System.out.println(e.getMessage());
-		}
-	}
-    
-	private static void debug (String s) {
-		if (debug) {
-			System.out.println(String.format("ZKCONNECTOR: %s", s ));
-		}
-	}
+        try {
+            zooKeeper.exists(
+                    path,
+                    new Watcher() {       // Anonymous Watcher
+                        @Override
+                        public void process(WatchedEvent event) {
+                            // check for event type NodeCreated
+                            boolean isNodeCreated = event.getType().equals(EventType.NodeCreated);
+                            // verify if this is the defined znode
+                            boolean isMyPath = event.getPath().equals(path);
+                            if (isNodeCreated && isMyPath) {
+                                debug(path + " created!");
+                                nodeCreatedSignal.countDown();
+                            }
+                        }
+                    });
+        } catch (KeeperException e) {
+            System.out.println(e.code());
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        debug("Waiting for " + path + " to be created ...");
+
+        try {
+            nodeCreatedSignal.await();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }
 
