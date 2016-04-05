@@ -132,8 +132,12 @@ public class ClientDriver {
             } else {
                 packet = new TaskPacket(TaskPacket.STATUS, hash);
             }
+            debug("WRITING");
             this.output.writeObject(packet);
+            debug("WRITTEN");
+            debug("READING");
             packet = (TaskPacket) this.input.readObject();
+            debug("READ");
             disconnect();
         } catch (Exception e) {
             return null;
