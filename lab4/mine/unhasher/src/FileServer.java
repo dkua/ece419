@@ -95,6 +95,7 @@ public class FileServer {
         FileServer fs = new FileServer(args[0]);
         try {
             fs.dictionaryPath = new File(args[1]).getCanonicalPath();
+            socket = new ServerSocket(0);
             fs.setPrimary();
         } catch (IOException e) {
             System.err.println("ERROR: Could not figure out dictionary path!");
@@ -127,8 +128,6 @@ public class FileServer {
     private void start() {
 
         try {
-            socket = new ServerSocket(0);
-
             debug("start: Listening for incoming connections...");
             final FileServerHandler fh;
             fh = new FileServerHandler(socket.accept(), zkc, zk, dictionary);
