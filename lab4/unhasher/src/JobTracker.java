@@ -267,7 +267,8 @@ public class JobTracker extends Thread implements Watcher {
                 // if in result, return result
                 debug("ID" + p.c_id);
                 debug("HASH" + p.hash);
-                if (!clientJobs.get(p.c_id).contains(p.hash)) {
+                ArrayList<String> jobs = clientJobs.get(p.c_id);
+                if (!jobs.contains(p.hash)) {
                     addJobToMap(p);
                     UseCount ucount = new UseCount(jobPath);
                     debug(String.format("job for %s exists with usecount %d, incrementing count", p.hash, ucount.count));
