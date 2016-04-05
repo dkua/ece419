@@ -49,7 +49,7 @@ public class FileServer {
 	Semaphore requestSem = new Semaphore(1);
 
 	File dictionaryFile;
-	String dictionaryPath = "unhasher/src/unhasher/dictionary/lowercase.rand";
+	static String dictionaryPath;
 	InputStream is;
 	BufferedReader br;
 
@@ -88,12 +88,16 @@ public class FileServer {
 	 * arg0		host name and port of Zookeeper
 	 */
 	public static void main(String[] args) {
-		if (args.length != 2) {
-			System.out.println("Usage: java -classpath lib/zookeeper-3.3.2.jar:lib/log4j-1.2.15.jar:. Test zkServer:clientPort port");
+		String[] s;
+		if(args.length == 3) {
+			s = args[0].split(":");
+			dictionaryPath = args[1];
+		} else {
+			System.err.println("ERROR: Invalid FireServer arguments!");
 			return;
 		}
 
-		FileServer fs = new FileServer(args[0],args[1]);		
+		FileServer fs = new FileServer(s[0], s[1]);
 		boolean isPrimary = fs.setPrimary();
 
 		try{
@@ -141,7 +145,6 @@ public class FileServer {
 		dictionary = new ArrayList<String>();
 
 		try{
-			//is = new FileInputStream(dictionaryPath);
 			br = new BufferedReader(new FileReader(dictionaryPath));
 
 			String line = null;
