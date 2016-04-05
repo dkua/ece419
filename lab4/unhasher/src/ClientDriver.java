@@ -76,6 +76,7 @@ public class ClientDriver {
 
     private void handleEvent(WatchedEvent event) {
         String path = event.getPath();
+        debug("PATH " + path);
         EventType type = event.getType();
         if(path.equalsIgnoreCase(PRIMARY)) {
             if (type == EventType.NodeDeleted) {
