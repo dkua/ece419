@@ -10,41 +10,18 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 
-/*
-
-  - Keep watcher on new jobs
-  - When a new job appears
-  - Partition work
-  - Send to workers
-
-*/
-
 public class Worker {
 
     static String myPath = "/workers";
     static String jobsPath = "/jobs";
     static String resultsPath = "/results";
-    static ServerSocket sock = null;
     // ZooKeeper resources
-    static Integer zkport;
-    static ZooKeeper zk;  //need to lock this
-    static Lock zklock;
-    static String ZK_TRACKER = "/tracker";
-    static String ZK_WORKER = "/worker";
-    static String ZK_FSERVER = "/fserver";
+    static ZooKeeper zk;
     static String ZK_JOBS = "/jobs";
     static String ZK_RESULTS = "/results";
     // JobTracker constants
-    static String TRACKER_PRIMARY = "primary";
-    static String TRACKER_BACKUP = "backup";
-    static String mode;
     static boolean debug = true;
-    private static Integer port;
-    private static String addrId;
     ZkConnector zkc;
-    int counter = 1;
-    boolean isPrimary = false;
-    Watcher watcher;
     Semaphore workerSem = new Semaphore(1);
     List<String> jobs;
     List<String> oldJobs = new ArrayList();
@@ -64,9 +41,6 @@ public class Worker {
         zk = zkc.getZooKeeper();
     }
 
-    /**
-     * @param args arg0		host name and port of Zookeeper
-     */
     public static void main(String[] args) {
         if (args.length != 1) {
             debug("Usage: java -classpath lib/zookeeper-3.3.2.jar:lib/log4j-1.2.15.jar:. Test zkServer:clientPort");
@@ -98,12 +72,10 @@ public class Worker {
         try {
             stat = zk.exists(
                     p,
-                    new Watcher() {       // Anonymous Watcher
+                    new Watcher() {
                         @Override
                         public void process(WatchedEvent event) {
-                            // check for event type NodeCreated
                             boolean isNodeCreated = event.getType().equals(EventType.NodeCreated);
-                            // verify if this is the defined znode
                             boolean isMyPath = event.getPath().equals(p);
                             if (isNodeCreated && isMyPath) {
                                 System.out.println(p + " created!");
@@ -133,22 +105,18 @@ public class Worker {
         debug("waitUntilExists: " + p + " exists.");
     }
 
-    // Keep track of all workers currently present
     private void registerWorker() {
-        // Create your folder in the path
         try {
-            // Wait until /worker is created
             waitUntilExists(myPath);
 
             String path;
             path = zk.create(
-                    myPath + "/",         // Path of znode
-                    null,           // Data not needed.
+                    myPath + "/",
+                    null,
                     ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.EPHEMERAL_SEQUENTIAL
             );
 
-            // Save your worker ID!
             w_id_string = path.split("/")[2];
             w_id = Integer.parseInt(path.split("/")[2]);
             debug("Successfuly registered with ID " + w_id);
@@ -159,30 +127,24 @@ public class Worker {
         }
     }
 
-    // Try to spawn a worker thread when a new job is created
     private boolean start() {
-        // Wait until /jobs is created
         waitUntilExists(ZK_JOBS);
 
         while (true) {
 
             jobs = new ArrayList();
 
-            // Wait until job path is created
             listenToPathChildren(jobsPath);
 
-            // Wait until children of path are modified
             try {
                 workerSem.acquire();
             } catch (Exception e) {
                 debug("Couldn't release semaphore");
             }
 
-            // Get any new jobs
             List<String> newJobs;
             newJobs = getNewJobs();
 
-            // Work on new job
             handle(newJobs);
         }
     }
@@ -192,7 +154,7 @@ public class Worker {
         try {
             jobs = zk.getChildren(
                     path,
-                    new Watcher() {       // Anonymous Watcher
+                    new Watcher() {
                         @Override
                         public void process(WatchedEvent event) {
                             try {
@@ -210,13 +172,8 @@ public class Worker {
         }
     }
 
-    // Return a list of string continue new jobs
     private List<String> getNewJobs() {
         List<String> newJobs = new ArrayList();
-        List<String> removedJobs = new ArrayList();
-        Stat status;
-        String dataStr;
-        byte[] data;
 
         debug("getNewJobs: Traversing through jobs.");
 
@@ -224,7 +181,6 @@ public class Worker {
             try {
                 debug("getNewJobs: " + path);
 
-                // Check if job is done
                 boolean isJobComplete;
                 isJobComplete = isJobDone(path);
 
@@ -236,7 +192,6 @@ public class Worker {
             } catch (Exception e) {
                 debug("getNewJobs: A path has been deleted! " + path);
 
-                // This job has been deleted!
                 oldJobs.remove(path);
             }
         }
@@ -282,18 +237,15 @@ public class Worker {
         return s;
     }
 
-    // Handle all new jobs
     private void handle(List<String> newJobs) {
         for (String path : newJobs) {
             debug("handle: Sending job " + path);
 
-            // Spawn a thread
             try {
                 new WorkerHandler(zkc, jobsPath + "/" + path, w_id_string).start();
             } catch (Exception e) {
                 debug("handle: Couldn't spawn WorkerHandler");
             }
-            // Add to oldJobs list
             oldJobs.add(path);
         }
     }

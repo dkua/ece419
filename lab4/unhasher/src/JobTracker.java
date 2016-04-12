@@ -19,7 +19,7 @@ public class JobTracker extends Thread implements Watcher {
     static String zkAddr;
     static String ZK_TRACKER = "/tracker";
     static String ZK_WORKER = "/workers";
-    static String ZK_JOBS = "/jobs";    // for submit tasks (jobs) only, used by worker
+    static String ZK_JOBS = "/jobs";
     static String ZK_RESULTS = "/results";
 
     // JobTracker constants
@@ -45,10 +45,8 @@ public class JobTracker extends Thread implements Watcher {
             debug("Connected to ZooKeeper instance zk");
             initZNodes();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -103,7 +101,6 @@ public class JobTracker extends Thread implements Watcher {
     private void initZNodes() {
         Stat status;
         try {
-            // create /tracker, and  set self as primary or backup
             status = zk.exists(ZK_TRACKER, false);
             if (status == null) {
                 zk.create(ZK_TRACKER,

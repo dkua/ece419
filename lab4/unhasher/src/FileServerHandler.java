@@ -16,17 +16,13 @@ public class FileServerHandler extends Thread {
     Socket cSocket = null;
     ObjectInputStream cin;
     ObjectOutputStream cout;
-    TaskPacket packetFromCD;
     ZooKeeper zk;
-    Lock zklock;
 
-    // Setup
     public FileServerHandler(Socket socket, ZkConnector zkc, ZooKeeper zk, List<String> dictionary) throws IOException {
         super("FileServerHandler");
         debug("FileServerHandler created.");
 
         try {
-            // Store variables
             this.cSocket = socket;
             this.cout = new ObjectOutputStream(cSocket.getOutputStream());
             this.cin = new ObjectInputStream(cSocket.getInputStream());
@@ -49,13 +45,10 @@ public class FileServerHandler extends Thread {
     }
 
     public void run() {
-        // Read in packet.
         PartitionPacket packetFromWorker;
 
         try {
             while ((packetFromWorker = (PartitionPacket) cin.readObject()) != null) {
-                // Got a packet!
-                // Reply back with a partition.
                 debug("run: Retrieved packet from a worker");
                 PartitionPacket packetToWorker = new PartitionPacket(PartitionPacket.PARTITION_REPLY);
 
@@ -66,7 +59,6 @@ public class FileServerHandler extends Thread {
                 int size = dictionary.size();
                 int partitionSize = (size / numWorkers);
 
-                // Find partition size
                 int i = partitionSize * (partition_id - 1);
                 int end = partitionSize * (partition_id);
 
@@ -76,14 +68,11 @@ public class FileServerHandler extends Thread {
 
                 packetToWorker.size = end - i;
 
-                // Save partition dictionary
                 packetToWorker.dictionary = new ArrayList(dictionary.subList(i, end));
 
-                // Send packet
                 cout.writeObject(packetToWorker);
                 debug("run: Sent packet");
 
-                // Your job is done!
                 break;
             }
             this.cSocket.close();

@@ -27,7 +27,6 @@ public class ClientDriver {
     static String PRIMARY = "/tracker/primary";
 
     public ClientDriver(String address) {
-        // Connect to ZooKeeper
         this.zkc = new ZkConnector();
         try {
             debug("Connecting to ZooKeeper instance at " + address);
@@ -99,7 +98,6 @@ public class ClientDriver {
                 debug(PRIMARY + "created!");
                 byte[] data = null;
                 while (data == null) {
-                    debug("FUCK");
                     try {
                         data = this.zk.getData(PRIMARY, false, null);
                         String dataStr = byteToString(data);
@@ -121,7 +119,7 @@ public class ClientDriver {
             this.input = new ObjectInputStream(this.socket.getInputStream());
             this.output = new ObjectOutputStream(this.socket.getOutputStream());
         } catch (Exception e) {
-            debug("connectToTracker: Couldn't add the streams.");
+            debug("Couldn't connect ClientDriver");
             e.printStackTrace();
         }
     }

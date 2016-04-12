@@ -16,10 +16,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-// Hashing library
-
-// Each WorkerHandler is assigned a job
-// Try and find if the password hash is equal to the word hash in worker's dictionary partition
 public class WorkerHandler extends Thread {
 
     static String myPath = "/workers";

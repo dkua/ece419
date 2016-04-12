@@ -7,53 +7,26 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Lock;
-
-/*
-
-  - Keep watcher on new requests
-  - When a new request appears
-  - Partition work
-  - Send to workers
-
- */
 
 public class FileServer {
 
     static String myPath = "/fserver";
-    static String requestsPath = "/requests";
     static String dictionaryPath;
     static ServerSocket socket;
     // ZooKeeper resources
-    static Integer zkport;
-    static ZooKeeper zk;  //need to lock this`
-    static Lock zklock;
-    static String ZK_TRACKER = "/tracker";
-    static String ZK_WORKER = "/worker";
-    static String ZK_FSERVER = "/fserver";
-    static String ZK_REQUESTS = "/requests";
-    static String ZK_RESULTS = "/results";
+    static ZooKeeper zk;
     // RequestTracker constants
     static String mode = "BACKUP";
     static boolean debug = true;
     static CountDownLatch modeSignal = new CountDownLatch(1);
-    private static Integer port;
-    private static String addrId;
     ZkConnector zkc;
     boolean isPrimary = false;
     Watcher watcher;
-    Semaphore requestSem = new Semaphore(1);
-    File dictionaryFile;
-    InputStream is;
     BufferedReader br;
-    List<String> requests;
-    List<String> oldRequests = new ArrayList();
     List<String> dictionary;
 
     // Start up ZooKeeper connection
@@ -81,12 +54,9 @@ public class FileServer {
 
     }
 
-    /**
-     * @param args arg0		host name and port of Zookeeper
-     */
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("ERROR: Invalid FireServer arguments!");
+            System.err.println("ERROR: Invalid FireServer arguments");
             return;
         }
 
@@ -96,7 +66,7 @@ public class FileServer {
             socket = new ServerSocket(0);
             fs.setPrimary();
         } catch (IOException e) {
-            System.err.println("ERROR: Could not figure out dictionary path!");
+            System.err.println("ERROR: Could not figure out dictionary path");
             System.exit(-1);
         }
 
@@ -109,9 +79,6 @@ public class FileServer {
             debug("main: Couldn't wait on modeSignal");
         }
 
-        // You've reached this far into the code
-        // You are the primary!
-        // Now, get to work.
         fs.start();
     }
 
@@ -131,7 +98,7 @@ public class FileServer {
                 new FileServerHandler(socket.accept(), zkc, zk, dictionary).start();
             }
         } catch (IOException e) {
-            System.err.println("ERROR: FileServer could not listen on port!");
+            System.err.println("ERROR: FileServer could not listen on port");
             System.exit(-1);
         }
     }
@@ -148,7 +115,6 @@ public class FileServer {
             int i = 0;
             // Traverse through dictionary and save it into the list
             while ((line = br.readLine()) != null) {
-                //debug(line);
                 dictionary.add(i, line);
                 i++;
             }

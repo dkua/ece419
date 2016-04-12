@@ -14,9 +14,9 @@ public class JobTrackerHandler extends Thread {
     static boolean debug = true;
     List<String> dictionary;
     ZkConnector zkc;
-    Socket cSocket = null;
-    ObjectInputStream cin;
-    ObjectOutputStream cout;
+    Socket socket = null;
+    ObjectInputStream input;
+    ObjectOutputStream output;
     ZooKeeper zk;
     static String ZK_JOBS = "/jobs";    // for submit tasks (jobs) only, used by worker
     static String ZK_RESULTS = "/results";
@@ -25,9 +25,9 @@ public class JobTrackerHandler extends Thread {
     public JobTrackerHandler(Socket socket, ZkConnector zkc, ZooKeeper zk) throws IOException {
         try {
             // Store variables
-            this.cSocket = socket;
-            this.cout = new ObjectOutputStream(cSocket.getOutputStream());
-            this.cin = new ObjectInputStream(cSocket.getInputStream());
+            this.socket = socket;
+            this.output = new ObjectOutputStream(this.socket.getOutputStream());
+            this.input = new ObjectInputStream(this.socket.getInputStream());
             this.zk = zk;
             this.zkc = zkc;
         } catch (IOException e) {
@@ -44,10 +44,8 @@ public class JobTrackerHandler extends Thread {
     public void run() {
         try {
             TaskPacket p;
-            while ((p = (TaskPacket) this.cin.readObject()) != null) {
-                // Got a packet!
+            while ((p = (TaskPacket) this.input.readObject()) != null) {
                 debug("run: Retrieved packet from a worker");
-                // Check if task is job or query
                 if (p.packet_type == TaskPacket.SUBMIT) {
                     p = handleJob(p);
                 } else if (p.packet_type == TaskPacket.STATUS) {
@@ -55,13 +53,11 @@ public class JobTrackerHandler extends Thread {
                 } else {
                     debug("Packet type could not be recognized");
                 }
-                // Send packet
-                this.cout.writeObject(p);
+                this.output.writeObject(p);
                 debug("run: Sent packet");
-                // Your job is done!
                 break;
             }
-            this.cSocket.close();
+            this.socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -72,7 +68,6 @@ public class JobTrackerHandler extends Thread {
         String resultPath = ZK_RESULTS + "/" + p.hash;
         String response = null;
         try {
-            // for query, check /result/[hash]
             Stat stat = zk.exists(resultPath, false);
 
             if (stat != null) {
@@ -81,19 +76,16 @@ public class JobTrackerHandler extends Thread {
                     data = zk.getData(resultPath, false, null);
                 }
 
-                // debugging
                 String dataStr = byteToString(data);
                 debug("handleQuery: " + dataStr);
 
                 String[] tokens = byteToString(data).split(":");
 
-                //if (tokens[0].equals("0")) {
-                //	response = "error: job '" + p.hash + "' could not be processed";
-                if (tokens[0].equals("success")) {//} else if (tokens[0].equals("success")) {
+                if (tokens[0].equals("success")) {
                     response = "password found: " + tokens[1];
                 } else if (tokens[0].equals("fail")) {
-                    response = "password not found; try again."; //response = "error: job could not be processed";
-                } else {//if (Integer.parseInt(tokens[0]) > 0) {
+                    response = "password not found; try again.";
+                } else {
                     response = "job in progress";
                 }
             } else {
@@ -108,27 +100,23 @@ public class JobTrackerHandler extends Thread {
     }
 
     private TaskPacket handleJob(TaskPacket p) {
-        // check if task already exists in /job/[hash]
-        // if not, create /job/[hash]
         debug(String.format("handling job '%s'", p.hash));
         String jobPath = ZK_JOBS + "/" + p.hash;
         String resultPath = ZK_RESULTS + "/" + p.hash;
 
         try {
-            // check if task already exists in /job/[hash]
             Stat statJob = zk.exists(jobPath, false);
             Stat statResult = zk.exists(resultPath, false);
 
-            // create job if it doesn't already exist
             if (statJob == null) {
                 String res = zk.create(jobPath,
-                        String.valueOf(1).getBytes(),  //1 node is using this job
+                        String.valueOf(1).getBytes(),
                         ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
             }
             if (statResult == null) {
                 String res = zk.create(resultPath,
-                        String.valueOf(0).getBytes(),  //init to 0
+                        String.valueOf(0).getBytes(),
                         ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
             }

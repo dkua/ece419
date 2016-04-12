@@ -17,7 +17,7 @@ public class ZkConnector implements Watcher {
     protected static final List<ACL> acl = Ids.OPEN_ACL_UNSAFE;
     static boolean debug = false;
     // ZooKeeper Object
-    ZooKeeper zooKeeper;
+    ZooKeeper zk;
     // To block any operation until ZooKeeper is connected. It's initialized
     // with count 1, that is, ZooKeeper connect state.
     CountDownLatch connectedSignal = new CountDownLatch(1);
@@ -33,7 +33,7 @@ public class ZkConnector implements Watcher {
      */
     public void connect(String hosts) throws IOException, InterruptedException {
 
-        zooKeeper = new ZooKeeper(
+        zk = new ZooKeeper(
                 hosts, // ZooKeeper service hosts
                 5000,  // Session timeout in milliseconds
                 this); // watcher - see process method for callbacks
@@ -44,25 +44,24 @@ public class ZkConnector implements Watcher {
      * Closes connection with ZooKeeper
      */
     public void close() throws InterruptedException {
-        zooKeeper.close();
+        zk.close();
     }
 
     /**
      * @return the zooKeeper
      */
     public ZooKeeper getZooKeeper() {
-        // Verify ZooKeeper's validity
-        if (null == zooKeeper || !zooKeeper.getState().equals(States.CONNECTED)) {
+        if (null == zk || !zk.getState().equals(States.CONNECTED)) {
             throw new IllegalStateException("ZooKeeper is not connected.");
         }
-        return zooKeeper;
+        return zk;
     }
 
     protected Stat exists(String path, Watcher watch) {
 
         Stat stat = null;
         try {
-            stat = zooKeeper.exists(path, watch);
+            stat = zk.exists(path, watch);
         } catch (Exception e) {
         }
 
@@ -76,7 +75,7 @@ public class ZkConnector implements Watcher {
             if (data != null) {
                 byteData = data.getBytes();
             }
-            zooKeeper.create(path, byteData, acl, mode);
+            zk.create(path, byteData, acl, mode);
 
         } catch (KeeperException e) {
             return e.code();
@@ -110,14 +109,12 @@ public class ZkConnector implements Watcher {
         final CountDownLatch nodeCreatedSignal = new CountDownLatch(1);
 
         try {
-            zooKeeper.exists(
+            zk.exists(
                     path,
                     new Watcher() {       // Anonymous Watcher
                         @Override
                         public void process(WatchedEvent event) {
-                            // check for event type NodeCreated
                             boolean isNodeCreated = event.getType().equals(EventType.NodeCreated);
-                            // verify if this is the defined znode
                             boolean isMyPath = event.getPath().equals(path);
                             if (isNodeCreated && isMyPath) {
                                 debug(path + " created!");
